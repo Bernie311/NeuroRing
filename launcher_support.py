@@ -1,7 +1,12 @@
 """Local launcher state and direct loopback health checks."""
+from contextlib import contextmanager
+import errno
+from http.client import HTTPException
 import json
+import os
 from pathlib import Path
 import socket
+import time
 import urllib.request
 
 BASE = Path(__file__).resolve().parent
@@ -20,8 +25,48 @@ def healthy(port):
         with HTTP.open(url(port) + '/api/health', timeout=1) as response:
             payload = json.load(response)
             return isinstance(payload, dict) and payload.get('app') == 'codex-live-screen'
-    except (OSError, ValueError):
+    except (OSError, ValueError, HTTPException):
         return False
+
+
+@contextmanager
+def lifecycle_lock(timeout=60):
+    """Serialize start/stop for this installation, including across processes."""
+    # Keep the file: unlinking it could let another process lock a different file.
+    with STATE.with_suffix('.lock').open('a+b') as handle:
+        handle.seek(0, os.SEEK_END)
+        if handle.tell() == 0:
+            handle.write(b'\0')
+            handle.flush()
+        if os.name == 'nt':
+            import msvcrt
+            def acquire():
+                handle.seek(0)
+                msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+            def release():
+                handle.seek(0)
+                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            import fcntl
+            def acquire():
+                fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            def release():
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+        deadline = time.monotonic() + timeout
+        while True:
+            try:
+                acquire()
+                break
+            except OSError as error:
+                if error.errno not in (errno.EACCES, errno.EAGAIN, errno.EDEADLK):
+                    raise
+                if time.monotonic() >= deadline:
+                    raise TimeoutError('另一项启动或停止操作尚未完成，请稍后重试。') from error
+                time.sleep(.05)
+        try:
+            yield
+        finally:
+            release()
 
 def saved_port():
     try:

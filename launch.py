@@ -5,9 +5,14 @@ import subprocess
 import sys
 import time
 import webbrowser
-from launcher_support import BASE, LOG, free_port, healthy, remember, running_port, url
+from launcher_support import BASE, LOG, free_port, healthy, lifecycle_lock, remember, running_port, url
 
 def start():
+    with lifecycle_lock():
+        return _start_locked()
+
+
+def _start_locked():
     existing = running_port()
     if existing:
         return existing
@@ -24,17 +29,25 @@ def start():
                 [str(executable), str(BASE/'server.py'), '--port', str(port)],
                 cwd=BASE, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0),
                 stdout=log, stderr=log)
-        for _ in range(60):
-            if process.poll() is not None:
-                break
-            if healthy(port):
-                remember(port, process.pid)
-                return port
-            time.sleep(.2)
-        if process.poll() is None:
-            # Only the child created by this attempt is stopped.
-            process.terminate()
-            process.wait(timeout=5)
+        handed_off = False
+        try:
+            for _ in range(60):
+                if process.poll() is not None:
+                    break
+                if healthy(port):
+                    remember(port, process.pid)
+                    handed_off = True
+                    return port
+                time.sleep(.2)
+        finally:
+            if not handed_off and process.poll() is None:
+                # Only this attempt's child is ours to clean up, even if saving fails.
+                process.terminate()
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait(timeout=5)
     raise RuntimeError(f'服务未能启动。详细错误已保存到：{LOG}')
 
 def main():

@@ -48,7 +48,9 @@ python launch.py
 
 排查启动问题可运行 `python launch.py --no-browser`，终端会显示实际访问地址；
 启动日志保存在 `launcher.log`，当前端口保存在 `.neuroring-runtime.json`。
-这两个文件仅在本机使用，不进入仓库。请使用启动器打开页面，不要固定收藏某个备用端口。
+启动和停止操作通过 `.neuroring-runtime.lock` 协调，连续点击启动也会复用同一服务。
+这些文件仅在本机使用，不进入仓库。服务运行期间请保留锁文件。
+请使用启动器打开页面，不要固定收藏某个备用端口。
 曾下载旧版的用户请更新仓库或重新下载完整 ZIP，确保同时包含 `launcher_support.py`。
 
 `catalog.json` 是可选的个人项目目录快照，不随仓库发布。
@@ -77,7 +79,7 @@ macOS、Linux 和其他 Codex 版本未验证；发布前检查范围见 [VALIDA
 - `data_source.py`：本机项目、聊天与事件读取。
 - `observer.py` / `transport.py`：Windows 桌面状态订阅与管道传输。
 - `launch.py` / `stop.py` / `launcher_support.py`：自动选择端口、复用与停止本机服务。
-- `tests/`：现有任务信息环测试及发布配置回归测试。
+- `tests/`：任务信息环、目录配置、启动与停止、审批状态回归测试。
 
 网页文件修改后刷新；Python 文件修改后重启服务。
 运行检查需要 Python 和 Node.js 18 或更新版本：

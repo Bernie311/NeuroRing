@@ -2,6 +2,57 @@
 import threading,time,uuid
 from transport import Pipe,Frames
 
+
+def _approval_flag(request):
+    if not isinstance(request,dict):raise ValueError('Invalid request metadata')
+    method=request.get('method','')
+    if not isinstance(method,str):raise ValueError('Invalid request method')
+    return 'requestApproval' in method
+
+
+def _request_flags(requests):
+    """Keep only one approval bit per request, never request parameters/body."""
+    if requests is None:return []
+    if isinstance(requests,list):return [_approval_flag(request) for request in requests]
+    if isinstance(requests,dict):return {key:_approval_flag(request) for key,request in requests.items()}
+    raise ValueError('Invalid requests collection')
+
+
+def _patch_request_flags(flags,patch):
+    """Apply supported Immer request patches to the metadata-only projection."""
+    op=patch.get('op');path=patch['path'];value=patch.get('value')
+    if op not in ('add','replace','remove'):raise ValueError('Unsupported request patch')
+    if op!='remove' and 'value' not in patch:raise ValueError('Missing request patch value')
+    if len(path)==1:return [] if op=='remove' else _request_flags(value)
+    key=path[1]
+    if isinstance(flags,list):
+        if type(key) is not int or key<0:raise ValueError('Invalid request index')
+        exists=key<len(flags)
+    else:
+        if not isinstance(key,str):raise ValueError('Invalid request key')
+        exists=key in flags
+    if len(path)>2:
+        if not exists or len(path)!=3 or path[2]!='method':
+            raise ValueError('Unsupported nested request patch')
+        if op!='remove' and not isinstance(value,str):raise ValueError('Invalid request method')
+        flags[key]=False if op=='remove' else 'requestApproval' in value
+    elif op=='add':
+        flag=_approval_flag(value)
+        if isinstance(flags,list):
+            if key>len(flags):raise ValueError('Invalid request index')
+            flags.insert(key,flag)
+        else:flags[key]=flag
+    else:
+        if not exists:raise ValueError('Missing request')
+        if op=='remove':del flags[key]
+        else:flags[key]=_approval_flag(value)
+    return flags
+
+
+def _has_approval(flags):
+    return any(flags.values() if isinstance(flags,dict) else flags)
+
+
 class Observer:
     def __init__(self):
         self.targets=[]; self.views={}; self.connected=False; self.error=None
@@ -13,6 +64,7 @@ class Observer:
     def get(self,sid):
         with self.lock: v=dict(self.views.get(sid,{}))
         if not self.connected or time.time()-v.get('checkedAt',0)>50:return None
+        v.pop('_requests',None)
         return v
     def consume(self,obj,cid):
         if obj.get('type')!='broadcast' or obj.get('sourceClientId')==cid:return
@@ -26,10 +78,9 @@ class Observer:
                 state=change.get('conversationState') or {}
                 status=(state.get('threadRuntimeStatus') or {}).get('type')
                 # Only status metadata survives this method; no message text is stored.
-                requests=state.get('requests') or []
-                if isinstance(requests,dict):requests=list(requests.values())
-                approval=any(isinstance(r,dict) and 'requestApproval' in str(r.get('method','')) for r in requests)
-                self.views[sid]={'status':status,'approval':approval,'checkedAt':now,
+                try:requests=_request_flags(state.get('requests'))
+                except ValueError:self.views.pop(sid,None);return
+                self.views[sid]={'status':status,'approval':_has_approval(requests),'_requests':requests,'checkedAt':now,
                                  'revision':change.get('revision'),'owner':obj.get('sourceClientId')}
             elif change.get('type')=='patches':
                 v=self.views.get(sid)
@@ -38,9 +89,17 @@ class Observer:
                 v['revision']=change.get('revision')
                 for patch in change.get('patches',[]):
                     path=patch.get('path',[]);value=patch.get('value')
+                    if not isinstance(path,list) or not path:
+                        self.views.pop(sid,None);return
                     if path==['threadRuntimeStatus']:v['status']=(value or {}).get('type') if isinstance(value,dict) else None
                     elif path==['threadRuntimeStatus','type']:v['status']=value
-                    elif path and path[0]=='requests':v['approval']=False
+                    elif path and path[0]=='requests':
+                        try:v['_requests']=_patch_request_flags(v['_requests'],patch)
+                        except ValueError:
+                            # Require a fresh snapshot when the projection cannot
+                            # follow a request change; never guess "no approval".
+                            self.views.pop(sid,None);return
+                        v['approval']=_has_approval(v['_requests'])
                 # Runtime status is authoritative; turn/tool updates cannot override it.
                 v['checkedAt']=now
     def run(self):
