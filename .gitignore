@@ -1,0 +1,20 @@
+__pycache__/
+*.py[cod]
+*.log
+.env
+.env.*
+.venv/
+venv/
+catalog.json
+.DS_Store
+Thumbs.db
+# Personal databases, activity and local exports
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+*.jsonl
+*.pem
+*.key
+.codex/
+coverage/

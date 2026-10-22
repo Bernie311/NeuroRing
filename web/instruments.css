@@ -1,0 +1,40 @@
+/* Compact, ivory optical instruments; live counts keep their original meaning. */
+main{grid-template-rows:minmax(380px,calc(100dvh - 429px)) 280px}
+.instruments{--instrument-ink:var(--nr-e3e2ca);--instrument-muted:var(--nr-929584);display:grid;grid-template-columns:1fr 1.05fr 1.12fr 1fr;grid-template-rows:140px 140px;background:var(--nr-060708);border-top:1px solid var(--nr-2a302a)}
+.instruments article{position:relative;display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;border-right:1px solid var(--nr-272c27);border-bottom:1px solid var(--nr-272c27);background:var(--nr-060708)}
+.instruments article:nth-child(4n){border-right:0}.instruments article:last-child{border-bottom:1px solid var(--nr-272c27)}
+.instruments article::before{left:12px;width:23px;background:var(--nr-c9c9b2);opacity:.65}
+.instruments .section-head{height:29px;min-height:29px;padding:0 12px;color:var(--instrument-ink);font-size:8px;letter-spacing:.25px;white-space:nowrap;gap:8px;font-weight:600}
+.instruments .section-head>span:last-child{font-weight:400;color:var(--instrument-muted);font-size:7px;letter-spacing:0}
+.instruments .visual-tag{border:1px solid var(--nr-424639);padding:2px 4px;color:var(--nr-9b9e8c)!important;font-size:6px!important}
+.instruments canvas.optical-scope{display:block;min-height:0;flex:1;width:100%;height:80px}
+.instruments .micro-note{color:var(--nr-808471);font-size:7px;padding:3px 12px 6px;line-height:1.3;flex:none}
+.instruments #project-list,.instruments #model-list{height:auto;min-height:0;flex:1;overflow:auto;padding:0 12px 5px}
+.instruments .project-row,.instruments .model-row{min-height:18px;height:18px;padding:3px 0;border-bottom:1px solid var(--nr-20241f);font-size:8px;color:var(--nr-bcbfad);gap:10px;line-height:1.25}
+.instruments .project-row span,.instruments .model-row span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.instruments .project-row b,.instruments .model-row b{color:var(--nr-e2e1c8);font-size:8px;flex:none;font-weight:400}
+.instruments .project-row:active{transform:none}
+.instruments .model-row{height:20px;min-height:20px;padding-bottom:5px}
+.instruments .model-row progress.bar{height:3px;bottom:0;width:100%;opacity:.75;background:var(--nr-181e18)}
+.instruments .model-row progress::-webkit-progress-bar{background:var(--nr-181e18)}
+.instruments .model-row progress::-webkit-progress-value{background:repeating-linear-gradient(90deg,var(--nr-d6d6bc) 0 4px,var(--nr-515747) 4px 5px)}
+.instruments .model-row progress::-moz-progress-bar{background:repeating-linear-gradient(90deg,var(--nr-d6d6bc) 0 4px,var(--nr-515747) 4px 5px)}
+.instrument-log{padding:0 12px;min-height:0;flex:1;overflow:hidden}
+.instrument-log-row{display:grid;grid-template-columns:20px 45px minmax(0,1fr);align-items:center;gap:5px;height:15px;font-size:7px;line-height:15px;color:var(--nr-d5d5bf)}
+.instrument-log-row .line-no{color:var(--nr-7b8170);font-size:7px}.instrument-log-row time{color:var(--nr-989d89);font-size:7px}
+.instrument-log-row .log-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.instrument-empty{font-size:8px;color:var(--nr-787f6c);padding:14px 0}
+.instrument-dual{display:grid;grid-template-columns:1fr 1fr;gap:0;min-height:0;flex:1}
+.instrument-dual>div{min-width:0;min-height:0;display:flex;flex-direction:column}.instrument-dual>div+div{border-left:1px solid var(--nr-282d25)}
+.instrument-subhead{font-size:6px;color:var(--nr-8b927c);padding:1px 10px 2px;flex:none;letter-spacing:.2px}
+.instruments .instrument-dual #event-scope{height:61px;min-height:0;width:100%;display:block;flex:1}
+.instruments .instrument-dual #history-chart{height:67px;min-height:0;padding:0 10px;gap:4px;flex:1;display:flex}
+.instruments .instrument-dual .day{gap:2px;font-size:6px;min-width:0;color:var(--nr-989d89)}.instruments .instrument-dual .day b{font-size:7px;color:var(--nr-d9dac2)}
+.instruments .instrument-dual .day small{font-size:6px;color:var(--nr-8f9781)}.instruments .instrument-dual .history-bar{height:35px}
+.instruments .history-bar rect{fill:var(--nr-bbbfa5)}.instruments .instrument-dual .micro-note{font-size:6px;padding:3px 9px 6px;white-space:normal;line-height:1.15;min-height:19px}
+.instruments .status-grid{grid-template-columns:repeat(24,minmax(0,1fr));gap:3px;padding:4px 12px 2px}
+.instruments .status-grid i{height:7px;background:var(--nr-393f34)}.instruments .status-grid i.active{background:var(--nr-edeed4);box-shadow:0 0 4px var(--nr-dfe2af60)}
+.instruments .status-grid i.idle{background:var(--nr-929c7d)}.instruments .status-grid i.ended{background:var(--nr-69755e)}.instruments .status-grid i.recent{background:var(--nr-a1b2ad)}.instruments .status-grid i.attention{background:var(--nr-cdb48a)}
+.instruments #status-counts{font-size:7px;gap:3px 9px;padding:6px 12px 3px;color:var(--nr-9aa38b);line-height:1.4}
+@media(min-width:1800px){main{grid-template-rows:minmax(500px,calc(100dvh - 429px)) 280px}.instruments .section-head{height:29px;min-height:29px}.instruments #project-list,.instruments #model-list{height:auto}.instruments .project-row,.instruments .model-row{font-size:9px}.instruments .section-head{font-size:9px}.instrument-log-row{font-size:8px}.instruments .status-grid i{height:7px}}
+@media(max-width:1100px)and(min-width:761px){.instruments{grid-template-columns:1fr 1fr 1.15fr 1fr}.instruments .section-head{font-size:7px;padding:0 9px;gap:4px}.instruments .section-head>span:last-child{font-size:6px}.instrument-log-row{grid-template-columns:17px minmax(0,1fr)}.instrument-log-row time{display:none}.instruments .status-grid{grid-template-columns:repeat(18,minmax(0,1fr));gap:2px}.instruments .status-grid i{height:6px}}
+@media(max-width:760px){main{display:flex;grid-template-rows:none}.instruments{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,140px);grid-auto-rows:140px;width:100%}.instruments article{border-right:1px solid var(--nr-272c27);border-bottom:1px solid var(--nr-272c27)}.instruments article:nth-child(2n){border-right:0}.instruments article:nth-child(1){order:1}.instruments article:nth-child(2){order:2}.instruments article:nth-child(3){order:5}.instruments article:nth-child(4){order:6}.instruments article:nth-child(5){order:3}.instruments article:nth-child(6){order:4}.instruments article:nth-child(7){order:7}.instruments article:nth-child(8){order:8}.instruments .signal-instrument{grid-column:auto}.instruments .section-head{font-size:7px;padding:0 10px}.instruments .section-head>span:last-child{font-size:6px}.instruments .instrument-dual{grid-template-columns:1fr 1fr}.instruments .instrument-dual #event-scope{height:61px}.instruments .status-grid{grid-template-columns:repeat(18,minmax(0,1fr));gap:2px}.instruments .status-grid i{height:6px}.instrument-log-row{grid-template-columns:18px 42px minmax(0,1fr)}}
