@@ -4,9 +4,9 @@
 
 把本机 Codex 的项目、聊天任务和委派关系，展示为一个可交互的神经环大屏。
 
-[![NeuroRing 神经环动态预览：圆环巡航、信号传播与任务信息环](docs/media/neuroring-orbit.gif)](https://github.com/Bernie311/NeuroRing/blob/main/docs/media/neuroring-showcase.mp4)
+[![NeuroRing 神经环动态预览：圆环巡航、信号传播与任务信息环](docs/media/neuroring-orbit.gif)](https://bernie311.github.io/NeuroRing/)
 
-**[▶ 观看 36 秒高清演示](https://github.com/Bernie311/NeuroRing/blob/main/docs/media/neuroring-showcase.mp4)** · [下载 MP4](https://raw.githubusercontent.com/Bernie311/NeuroRing/main/docs/media/neuroring-showcase.mp4) · [快速开始](#快速开始) · [商用授权](#许可与商业授权)
+**[▶ 观看 36 秒高清演示](https://bernie311.github.io/NeuroRing/)** · [下载 MP4](https://bernie311.github.io/NeuroRing/media/neuroring-showcase.mp4) · [快速开始](#快速开始) · [商用授权](#许可与商业授权)
 
 > 以上为实际界面录制，使用 12 个虚构项目和 420 条演示任务，不包含真实聊天。粒子与传播为视觉效果，演示中的状态也由合成数据提供。
 
