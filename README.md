@@ -6,7 +6,7 @@
 
 [![NeuroRing 神经环动态预览：圆环巡航、信号传播与任务信息环](docs/media/neuroring-orbit.gif)](https://bernie311.github.io/NeuroRing/)
 
-**[▶ 观看 36 秒高清演示](https://bernie311.github.io/NeuroRing/)** · [下载 MP4](https://bernie311.github.io/NeuroRing/media/neuroring-showcase.mp4) · [快速开始](#快速开始) · [商用授权](#许可与商业授权)
+**[▶ 观看 36 秒高清演示](https://bernie311.github.io/NeuroRing/)** · [下载 MP4](https://bernie311.github.io/NeuroRing/media/neuroring-showcase.mp4) · [快速开始](#快速开始) · [支持作者](#支持作者) · [商用授权](#许可与商业授权)
 
 > 以上为实际界面录制，使用 12 个虚构项目和 420 条演示任务，不包含真实聊天。粒子与传播为视觉效果，演示中的状态也由合成数据提供。
 
@@ -92,6 +92,32 @@ node --test tests/task-band.test.cjs
 
 这是带非商业限制的源码可用（source-available）项目，
 不属于 [OSI 定义的开源软件](https://opensource.org/osd)。完整条款以 [LICENSE](LICENSE) 为准。
+
+## 支持作者
+
+如果 NeuroRing 对你有帮助，欢迎自愿打赏，支持后续维护与改进。
+**打赏不代表获得商业使用授权；商用仍须事先取得作者的书面授权。**
+
+### 微信
+
+<details>
+<summary>展开微信收款码</summary>
+
+<img src="docs/support/wechat-pay.jpg" alt="作者提供的微信收款码" width="280">
+
+[打开收款码原图](docs/support/wechat-pay.jpg)
+
+</details>
+
+### USDT · Solana
+
+币种：**USDT**。网络：**Solana（SPL）**。
+
+```text
+EHgGjMXTGgHck4zEwKpK4LqAincrRMox77ZuHijJt1a5
+```
+
+[前往打赏页面，一键复制地址](https://bernie311.github.io/NeuroRing/#support)。转账时请选择上方标明的币种与网络。
 
 ## 联系作者
 
