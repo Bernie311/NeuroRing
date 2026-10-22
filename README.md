@@ -42,8 +42,14 @@ python launch.py
 ```
 
 也可以下载 ZIP，解压后双击 `启动大屏.cmd`。
-浏览器访问 <http://127.0.0.1:8791/>；双击 `停止大屏.cmd` 可停止服务。
-关闭浏览器不会停止后台服务。排查启动问题可运行 `python server.py` 查看错误。
+启动器会自动打开浏览器。优先使用 `8791` 端口；如果该端口被系统保留或被其他程序占用，
+会自动选择可用端口，不需要更改 Windows 设置。重复启动会复用已经启动的服务。
+双击 `停止大屏.cmd` 可停止服务；关闭浏览器不会停止后台服务。
+
+排查启动问题可运行 `python launch.py --no-browser`，终端会显示实际访问地址；
+启动日志保存在 `launcher.log`，当前端口保存在 `.neuroring-runtime.json`。
+这两个文件仅在本机使用，不进入仓库。请使用启动器打开页面，不要固定收藏某个备用端口。
+曾下载旧版的用户请更新仓库或重新下载完整 ZIP，确保同时包含 `launcher_support.py`。
 
 `catalog.json` 是可选的个人项目目录快照，不随仓库发布。
 缺少该文件时会使用空目录，并继续从本机 Codex 配置与数据库发现项目和聊天。
@@ -70,6 +76,7 @@ macOS、Linux 和其他 Codex 版本未验证；发布前检查范围见 [VALIDA
 - `server.py`：本机 HTTP 服务和数据接口。
 - `data_source.py`：本机项目、聊天与事件读取。
 - `observer.py` / `transport.py`：Windows 桌面状态订阅与管道传输。
+- `launch.py` / `stop.py` / `launcher_support.py`：自动选择端口、复用与停止本机服务。
 - `tests/`：现有任务信息环测试及发布配置回归测试。
 
 网页文件修改后刷新；Python 文件修改后重启服务。

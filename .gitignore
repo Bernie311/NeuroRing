@@ -18,3 +18,5 @@ Thumbs.db
 *.key
 .codex/
 coverage/
+.neuroring-runtime.json
+.neuroring-runtime.tmp
