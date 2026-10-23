@@ -131,8 +131,9 @@ try {
     $link=Join-Path $desktop 'NeuroRing Portable.lnk'
     Assert (Test-Path -LiteralPath $link) 'Desktop shortcut missing'
     $shortcut=(New-Object -ComObject WScript.Shell).CreateShortcut($link)
-    Assert ($shortcut.TargetPath -eq $exe) 'Shortcut target mismatch'
-    Passed 'Desktop shortcut created without administrator privileges'
+    $shortcutTarget=$shortcut.TargetPath
+    $report.shortcut=@{expected=$exe;actual=$shortcutTarget;workingDirectory=$shortcut.WorkingDirectory;path=$link}
+    Copy-Item -LiteralPath $link -Destination (Join-Path $ResultDir 'NeuroRing Portable.lnk')
 
     $edge=Join-Path ${env:ProgramFiles(x86)} 'Microsoft\Edge\Application\msedge.exe'
     if (-not (Test-Path -LiteralPath $edge)) { $edge=Join-Path $env:ProgramFiles 'Microsoft\Edge\Application\msedge.exe' }
@@ -148,6 +149,8 @@ try {
     $dom=Get-Content -LiteralPath $domFile -Raw -Encoding UTF8
     Assert ($dom.Contains('Synthetic demo task')) 'Browser did not render fixture tasks'
     Passed 'Edge renders the packaged dashboard and synthetic task data in the isolated user session'
+    Assert ($shortcutTarget -eq $exe) ('Shortcut target mismatch: '+$shortcutTarget+' != '+$exe)
+    Passed 'Desktop shortcut created without administrator privileges'
 
     # Exercise the ordinary entry point too; the server is already available.
     $normal=Spawn-App -Arguments @()
@@ -172,6 +175,11 @@ try {
 } finally {
     if ($blocker) { $blocker.Stop() }
     try { Launch -Arguments @('--stop','--no-browser') } catch {}
+    $logs=Join-Path $env:LOCALAPPDATA 'NeuroRing'
+    if (Test-Path -LiteralPath $logs) {
+        Get-ChildItem -LiteralPath $logs -Filter 'launcher.log' -Recurse -File | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $ResultDir 'launcher.log') }
+    }
     $report | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $ResultDir 'report.json') -Encoding UTF8
 }
 if (-not $report.passed) { exit 1 }
+
