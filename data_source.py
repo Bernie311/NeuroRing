@@ -1,9 +1,14 @@
 """Read-only local project/thread metadata and bounded activity tails."""
-import collections,datetime,json,pathlib,sqlite3,time
+import collections,datetime,json,os,pathlib,sqlite3,sys,time
 
 LABELS={'task_started':'本轮开始','task_complete':'本轮结束','task_completed':'本轮结束',
         'turn_aborted':'本轮中断','turn_completed':'本轮结束'}
 TERMINAL={'task_complete','task_completed','turn_completed','turn_aborted'}
+
+class DataUnavailable(Exception):
+    def __init__(self,code,message):
+        super().__init__(message)
+        self.code=code
 
 def stamp(s):
     try:return datetime.datetime.fromisoformat(s.replace('Z','+00:00')).timestamp()
@@ -11,8 +16,9 @@ def stamp(s):
 
 class Source:
     def __init__(self,observer,base=None):
-        self.home=pathlib.Path(base or pathlib.Path.home()/'.codex');self.observer=observer;self.cache={}
-        catalog_path=pathlib.Path(__file__).with_name('catalog.json')
+        self.home=pathlib.Path(base or os.environ.get('NEURORING_CODEX_HOME') or os.environ.get('CODEX_HOME') or pathlib.Path.home()/'.codex').expanduser().resolve();self.observer=observer;self.cache={}
+        catalog_path=(pathlib.Path(sys.executable).resolve().parent/'catalog.json' if getattr(sys,'frozen',False)
+                      else pathlib.Path(__file__).with_name('catalog.json'))
         self.catalog=(json.loads(catalog_path.read_text(encoding='utf-8'))
                       if catalog_path.exists() else {'capturedAt':None,'projects':[]})
     def activity(self,path):
@@ -36,7 +42,14 @@ class Source:
             self.cache[path]=(key,value);return value
         except OSError:return {'events':[],'terminal':None,'last':0}
     def collect(self):
-        now=time.time();g=json.loads((self.home/'.codex-global-state.json').read_text(encoding='utf-8'))
+        if not (self.home/'state_5.sqlite').is_file():
+            if any(self.home.glob('state_*.sqlite')):
+                raise DataUnavailable('incompatible','当前 Codex 数据版本暂不兼容，请检查 NeuroRing 是否有新版本。')
+            raise DataUnavailable('missing','尚未发现本机 Codex 数据。请先打开 Codex 桌面版，登录并创建一条聊天；本页会自动重试。')
+        config=self.home/'.codex-global-state.json'
+        if not config.is_file():
+            raise DataUnavailable('missing','尚未发现 Codex 桌面配置。请先打开 Codex 桌面版并创建一条聊天；本页会自动重试。')
+        now=time.time();g=json.loads(config.read_text(encoding='utf-8'))
         c=sqlite3.connect((self.home/'state_5.sqlite').as_uri()+'?mode=ro',uri=True,timeout=2)
         c.row_factory=sqlite3.Row
         try:

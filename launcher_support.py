@@ -3,15 +3,24 @@ from contextlib import contextmanager
 import errno
 from http.client import HTTPException
 import json
+import hashlib
 import os
 from pathlib import Path
 import socket
+import sys
 import time
 import urllib.request
 
 BASE = Path(__file__).resolve().parent
-STATE = BASE / '.neuroring-runtime.json'
-LOG = BASE / 'launcher.log'
+FROZEN = bool(getattr(sys, 'frozen', False))
+INSTALL = Path(sys.executable).resolve().parent if FROZEN else BASE
+# Bundled resources are read-only. Each extracted copy owns its own service.
+INSTANCE = hashlib.sha256(str(INSTALL).casefold().encode('utf-8')).hexdigest()[:16] if FROZEN else None
+DATA = Path(os.environ['NEURORING_DATA_DIR']) if os.environ.get('NEURORING_DATA_DIR') else (
+    Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData' / 'Local')) / 'NeuroRing' / INSTANCE
+    if FROZEN else BASE)
+STATE = DATA / '.neuroring-runtime.json'
+LOG = DATA / 'launcher.log'
 DEFAULT_PORT = 8791
 HTTP = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
@@ -24,7 +33,8 @@ def healthy(port):
     try:
         with HTTP.open(url(port) + '/api/health', timeout=1) as response:
             payload = json.load(response)
-            return isinstance(payload, dict) and payload.get('app') == 'codex-live-screen'
+            return (isinstance(payload, dict) and payload.get('app') == 'codex-live-screen'
+                    and (INSTANCE is None or payload.get('instance') == INSTANCE))
     except (OSError, ValueError, HTTPException):
         return False
 
@@ -33,6 +43,7 @@ def healthy(port):
 def lifecycle_lock(timeout=60):
     """Serialize start/stop for this installation, including across processes."""
     # Keep the file: unlinking it could let another process lock a different file.
+    STATE.parent.mkdir(parents=True, exist_ok=True)
     with STATE.with_suffix('.lock').open('a+b') as handle:
         handle.seek(0, os.SEEK_END)
         if handle.tell() == 0:

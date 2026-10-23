@@ -57,16 +57,31 @@ function renderInstruments(){const key=JSON.stringify([Math.floor((Date.now()/10
 function render(){if(!data)return;const chosen=$('#project').value,opts=data.projects.map(p=>`<option value="${esc(p.id)}">${esc(p.name)} · ${p.count}</option>`).join('');
  if($('#project').dataset.opts!==opts){$('#project').innerHTML='<option value="all">所有项目</option>'+opts;$('#project').dataset.opts=opts;$('#project').value=[...$('#project').options].some(o=>o.value===chosen)?chosen:'all';}
  visible=filtered();$('#project-count').textContent=data.projects.filter(p=>p.count&&p.id!=='unassigned').length;$('#thread-count').textContent=visible.length;$('#active-count').textContent=data.threads.filter(t=>t.status==='active').length;$('#recent-count').textContent=data.threads.filter(t=>t.updatedAt>Date.now()/1000-86400).length;
- $('#connection').textContent=data.connection.connected?`本机在线 · ${data.connection.synced} 条实时状态`:'状态离线 · 本地记录';$('#updated').textContent='数据读取 '+time(data.generatedAt);$('#health').textContent=`已读取 ${data.threads.length} 条真实记录 · 实时状态订阅最近 8 条 · 本机只读`;
+ $('#connection').textContent=data.connection.connected?`本机在线 · ${data.connection.synced} 条实时状态`:'实时未连接 · 本地记录';$('#updated').textContent='数据读取 '+time(data.generatedAt);$('#health').textContent=`已读取 ${data.threads.length} 条真实记录 · 实时状态订阅最近 8 条 · 本机只读`;
  const allowed=new Set(visible.map(t=>t.id)),events=data.events.filter(e=>allowed.has(e.threadId)).slice(0,35),eventKey=events.map(e=>e.at+e.threadId+e.label).join('|');
  if(eventKey!==lastEvents){const oldFirst=$('#activity').firstElementChild?.dataset.key;$('#activity').innerHTML=events.length?events.map((e,i)=>`<div class="event${i===0&&oldFirst&&oldFirst!==String(e.at)?' new':''}" data-key="${e.at}"><time>${time(e.at)}</time><div><strong>${esc(e.label)}</strong><p title="${esc(e.threadName)}">${esc(e.threadName)}</p></div></div>`).join(''):'<p class="empty">当前筛选暂无近期事件。</p>';lastEvents=eventKey;}
  window.NeuroInstruments?.update({data,visible});
  if(!visible.some(t=>t.id===selected))selected=visible.find(t=>t.status==='active')?.id||visible[0]?.id||null;renderDetail();if(!$('#tasks-panel').hidden)renderRows();renderInstruments();
  const sig=visible.map(t=>t.id+':'+t.status+':'+t.projectId+':'+t.model+':'+t.name).join('|')+data.edges.map(e=>e.source+e.target).join('|');if(sig!==signature||!signature){signature=sig;layout();}
- updateTaskBand();$('#empty-graph').hidden=visible.length>0;$('#view-summary').textContent=`${visible.length} 条真实聊天 · ${data.edges.filter(e=>allowed.has(e.source)&&allowed.has(e.target)).length} 条委派关系`;
+ updateTaskBand();$('#empty-graph').hidden=visible.length>0;
+ $('#empty-graph').textContent=data.threads.length?'当前筛选没有任务。请切换项目、时间或清空搜索。':'还没有聊天记录。请在 Codex 中创建一条聊天，本页会自动更新。';
+ $('#view-summary').textContent=`${visible.length} 条真实聊天 · ${data.edges.filter(e=>allowed.has(e.source)&&allowed.has(e.target)).length} 条委派关系`;
 }
 function markStale(){transportOffline=true;if(rawData){data=NeuroTaskBand.normalizeState(rawData,Date.now()/1000,true);render();}$('#connection').textContent='本机服务暂不可用';$('#active-count').textContent='—';}
-async function refresh(){if(fetching)return;fetching=true;try{const r=await fetch('/api/state',{cache:'no-store',signal:AbortSignal.timeout(5000)});if(!r.ok)throw Error('读取失败');const next=await r.json();if(!next.ok)throw Error(next.error);rawData=next;transportOffline=false;data=NeuroTaskBand.normalizeState(next);observeEvents(data);lastSuccess=Date.now();$('#banner').hidden=true;render();}catch(e){$('#banner').textContent='连接中断，保留最近记录；实时状态暂不可确认。';$('#banner').hidden=false;markStale();}finally{fetching=false;}}
+function showDataUnavailable(next){
+ markStale();$('#connection').textContent=next.code==='loading'?'正在读取本机数据':'等待本机数据';
+ $('#banner').textContent=next.error||'本机数据暂不可读，本页会自动重试。';$('#banner').hidden=false;
+ $('#health').textContent='本机服务已启动 · 等待可用数据 · 每 3 秒自动重试';
+ if(!rawData){$('#empty-graph').hidden=false;$('#empty-graph').textContent=next.error;$('#graph-scope').textContent='等待真实记录';$('#view-summary').textContent='启动成功，等待连接你的 Codex';$('#updated').textContent='正在自动重试';}
+}
+async function refresh(){if(fetching)return;fetching=true;try{
+ const r=await fetch('/api/state',{cache:'no-store',signal:AbortSignal.timeout(5000)});if(!r.ok)throw Error('读取失败');
+ const next=await r.json();if(!next.ok){showDataUnavailable(next);return;}
+ rawData=next;transportOffline=false;data=NeuroTaskBand.normalizeState(next);observeEvents(data);lastSuccess=Date.now();
+ $('#banner').hidden=!!data.connection.connected;
+ if(!data.connection.connected)$('#banner').textContent=next.connection?.error==='状态协议版本变化'?'Codex 实时状态版本暂不兼容；当前展示本地记录，实时状态待确认。':'已读取本地记录。请保持 Codex 桌面版打开以获取实时状态；未同步的任务状态待确认。';
+ render();
+ }catch(e){$('#banner').textContent=rawData?'连接中断，保留最近记录；实时状态暂不可确认。':'本机服务暂不可用。请重新双击 NeuroRing 启动；本页会自动重试。';$('#banner').hidden=false;markStale();}finally{fetching=false;}}
 
 // Geometry describes actual memberships and delegations. Fibre copies are optical strokes,
 // never extra tasks. Repeating propagation is presentation; RUN comes only from live data.

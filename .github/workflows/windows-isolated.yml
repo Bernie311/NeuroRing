@@ -1,0 +1,39 @@
+name: Isolated Windows portable acceptance
+on:
+  workflow_dispatch:
+  push:
+    branches: ['validate/portable-*']
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: windows-2025
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Source regressions
+        shell: pwsh
+        run: python -m unittest discover -s tests -p "test_*.py"
+      - name: Frontend regressions
+        shell: pwsh
+        run: node --test tests/task-band.test.cjs
+      - name: Test the exact release ZIP as a new non-admin user
+        shell: pwsh
+        run: |
+          $manifest = Get-Content packaging/release-candidate.json -Raw | ConvertFrom-Json
+          $archive = Join-Path $env:GITHUB_WORKSPACE ('.validation/' + $manifest.file)
+          if (-not (Test-Path -LiteralPath $archive)) {
+            $archive = Join-Path $env:RUNNER_TEMP $manifest.file
+            Invoke-WebRequest -Uri $manifest.url -OutFile $archive
+          }
+          ./packaging/test_isolated_windows.ps1 -Archive $archive -ExpectedSha256 $manifest.sha256
+      - name: Preserve isolated test evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: isolated-windows-evidence
+          path: isolated-results/
+          if-no-files-found: warn
+          retention-days: 14
