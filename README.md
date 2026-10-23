@@ -32,6 +32,10 @@
 
 ## 快速开始
 
+Windows 免安装候选版已提供构建入口：完整解压发行包后，双击 `NeuroRing.exe`，无需 Python、Node.js 或 Git。
+免安装版的使用、停止、快捷方式、兼容边界与构建方法见 [PORTABLE.md](PORTABLE.md)。
+下面保留源码运行方式。
+
 当前实现面向 **Windows + Python 3.11 或更新版本 + 本机 Codex 桌面版**。
 Python 需加入 PATH，能够运行 `python` 和 `pythonw`。无需第三方 Python 包或前端构建工具。
 

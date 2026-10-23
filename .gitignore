@@ -21,3 +21,7 @@ coverage/
 .neuroring-runtime.json
 .neuroring-runtime.tmp
 .neuroring-runtime.lock
+.build/
+dist/
+.validation/
+isolated-results/

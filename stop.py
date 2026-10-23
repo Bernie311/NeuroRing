@@ -25,9 +25,9 @@ def _stop_locked():
                 raise TimeoutError('服务尚未停止，请稍后重试。')
             time.sleep(.1)
         STATE.unlink(missing_ok=True)
-    except (OSError, HTTPException):
+    except (OSError, HTTPException) as error:
         # Retain the port so a subsequent stop can retry.
-        return
+        raise RuntimeError('服务尚未确认停止，请稍后重试。') from error
 
 if __name__ == '__main__':
     main()
