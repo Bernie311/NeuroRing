@@ -65,6 +65,8 @@ try {
     $env:PSModulePath=(Join-Path $env:USERPROFILE 'Documents\WindowsPowerShell\Modules')+';'+(Join-Path $env:ProgramFiles 'WindowsPowerShell\Modules')+';'+(Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\Modules')
     New-Item -ItemType Directory -Path $env:TEMP -Force | Out-Null
     $report.environment=@{user=$env:USERNAME;isAdministrator=$false;os=(Get-CimInstance Win32_OperatingSystem).Caption;profile=$env:USERPROFILE;computer=$env:COMPUTERNAME}
+    $report.environment.culture=[Globalization.CultureInfo]::CurrentCulture.Name
+    $report.environment.is64BitProcess=[Environment]::Is64BitProcess
     $report.environment.packageAcl=(Get-Acl -LiteralPath $PackageDir).Sddl
     $report.environment.exeAcl=(Get-Acl -LiteralPath $exe).Sddl
     $report.environment.exeReadableBytes=[IO.File]::ReadAllBytes($exe).Length
@@ -130,9 +132,7 @@ try {
     Launch -Arguments @('--shortcut','--no-browser')
     $link=Join-Path $desktop 'NeuroRing Portable.lnk'
     Assert (Test-Path -LiteralPath $link) 'Desktop shortcut missing'
-    $shortcut=(New-Object -ComObject WScript.Shell).CreateShortcut($link)
-    $shortcutTarget=$shortcut.TargetPath
-    $report.shortcut=@{expected=$exe;actual=$shortcutTarget;workingDirectory=$shortcut.WorkingDirectory;path=$link}
+    $report.shortcut=@{expected=$exe;path=$link}
     Copy-Item -LiteralPath $link -Destination (Join-Path $ResultDir 'NeuroRing Portable.lnk')
 
     $edge=Join-Path ${env:ProgramFiles(x86)} 'Microsoft\Edge\Application\msedge.exe'
@@ -149,8 +149,17 @@ try {
     $dom=Get-Content -LiteralPath $domFile -Raw -Encoding UTF8
     Assert ($dom.Contains('Synthetic demo task')) 'Browser did not render fixture tasks'
     Passed 'Edge renders the packaged dashboard and synthetic task data in the isolated user session'
-    Assert ($shortcutTarget -eq $exe) ('Shortcut target mismatch: '+$shortcutTarget+' != '+$exe)
-    Passed 'Desktop shortcut created without administrator privileges'
+    # Verify the link by actually starting a stopped service through the Windows
+    # shell. The legacy WScript reader also loses Unicode on some system locales.
+    Stop-App
+    $viaLink=Start-Process -FilePath $link -ArgumentList '--no-browser' -WindowStyle Hidden -PassThru
+    Assert ($viaLink.WaitForExit(30000) -and $viaLink.ExitCode -eq 0) 'Desktop shortcut launch failed'
+    $saved=Read-Runtime
+    $linkedProcess=Get-CimInstance Win32_Process -Filter ('ProcessId='+$saved.pid)
+    Assert ($linkedProcess.ExecutablePath -eq $exe) 'Shortcut launched the wrong executable'
+    $report.shortcut.launchedExecutable=$linkedProcess.ExecutablePath
+    $null=Await-State { param($s) $s.ok -eq $true }
+    Passed 'Unicode desktop shortcut creates and starts the correct EXE without administrator privileges'
 
     # Exercise the ordinary entry point too; the server is already available.
     $normal=Spawn-App -Arguments @()
@@ -182,4 +191,3 @@ try {
     $report | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $ResultDir 'report.json') -Encoding UTF8
 }
 if (-not $report.passed) { exit 1 }
-

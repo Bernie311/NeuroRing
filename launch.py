@@ -1,6 +1,5 @@
 """Launch NeuroRing on a usable local port, then open the browser."""
 import argparse
-import base64
 import os
 import pathlib
 import subprocess
@@ -60,23 +59,11 @@ def _start_locked():
     raise RuntimeError(f'服务未能启动。详细错误已保存到：{LOG}')
 
 def create_shortcut():
-    """Create a per-user shortcut with safely passed paths, no elevation."""
+    """Create a per-user Unicode shortcut without elevation or scripting tools."""
     if not FROZEN:
         raise RuntimeError('请在免安装版中创建快捷方式。')
-    shell = pathlib.Path(os.environ['SystemRoot']) / 'System32/WindowsPowerShell/v1.0/powershell.exe'
-    # Pass the Unicode path as ASCII data to avoid code-page conversion when
-    # handing it to the Windows script host on systems with another locale.
-    target = base64.b64encode(sys.executable.encode('utf-16le')).decode('ascii')
-    script = ("$ErrorActionPreference='Stop'; "
-              "$target=[Text.Encoding]::Unicode.GetString([Convert]::FromBase64String('" + target + "')); "
-              "$s = (New-Object -ComObject WScript.Shell).CreateShortcut("
-              "(Join-Path ([Environment]::GetFolderPath('Desktop')) 'NeuroRing Portable.lnk')); "
-              "$s.TargetPath=$target; "
-              "$s.WorkingDirectory=[IO.Path]::GetDirectoryName($target); "
-              "$s.Description='NeuroRing'; "
-              "if ($s.TargetPath -ne $target) { throw 'Shortcut target could not be preserved.' }; $s.Save()")
-    subprocess.run([str(shell), '-NoProfile', '-NonInteractive', '-Command', script],
-                   creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0), check=True)
+    from windows_shortcut import create_desktop_shortcut
+    create_desktop_shortcut(sys.executable)
 
 
 def main():
