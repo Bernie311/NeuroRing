@@ -1,5 +1,6 @@
 """Launch NeuroRing on a usable local port, then open the browser."""
 import argparse
+import base64
 import os
 import pathlib
 import subprocess
@@ -63,13 +64,18 @@ def create_shortcut():
     if not FROZEN:
         raise RuntimeError('请在免安装版中创建快捷方式。')
     shell = pathlib.Path(os.environ['SystemRoot']) / 'System32/WindowsPowerShell/v1.0/powershell.exe'
-    script = ("$s = (New-Object -ComObject WScript.Shell).CreateShortcut("
+    # Pass the Unicode path as ASCII data to avoid code-page conversion when
+    # handing it to the Windows script host on systems with another locale.
+    target = base64.b64encode(sys.executable.encode('utf-16le')).decode('ascii')
+    script = ("$ErrorActionPreference='Stop'; "
+              "$target=[Text.Encoding]::Unicode.GetString([Convert]::FromBase64String('" + target + "')); "
+              "$s = (New-Object -ComObject WScript.Shell).CreateShortcut("
               "(Join-Path ([Environment]::GetFolderPath('Desktop')) 'NeuroRing Portable.lnk')); "
-              "$s.TargetPath=$env:NEURORING_SHORTCUT_TARGET; "
-              "$s.WorkingDirectory=[IO.Path]::GetDirectoryName($env:NEURORING_SHORTCUT_TARGET); "
-              "$s.Description='NeuroRing'; $s.Save()")
+              "$s.TargetPath=$target; "
+              "$s.WorkingDirectory=[IO.Path]::GetDirectoryName($target); "
+              "$s.Description='NeuroRing'; "
+              "if ($s.TargetPath -ne $target) { throw 'Shortcut target could not be preserved.' }; $s.Save()")
     subprocess.run([str(shell), '-NoProfile', '-NonInteractive', '-Command', script],
-                   env={**os.environ, 'NEURORING_SHORTCUT_TARGET':sys.executable},
                    creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0), check=True)
 
 

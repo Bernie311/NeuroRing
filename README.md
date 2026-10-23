@@ -32,9 +32,23 @@
 
 ## 快速开始
 
-Windows 免安装候选版已提供构建入口：完整解压发行包后，双击 `NeuroRing.exe`，无需 Python、Node.js 或 Git。
-免安装版的使用、停止、快捷方式、兼容边界与构建方法见 [PORTABLE.md](PORTABLE.md)。
-下面保留源码运行方式。
+### Windows 免安装版（推荐）
+
+**[下载 NeuroRing Windows x64](https://github.com/Bernie311/NeuroRing/releases/download/v0.1.0-preview.1/NeuroRing-Windows-x64.zip)** · [版本说明与校验文件](https://github.com/Bernie311/NeuroRing/releases/tag/v0.1.0-preview.1)
+
+1. 下载 `NeuroRing-Windows-x64.zip`，完整解压到一个文件夹。
+2. 双击里面的 `NeuroRing.exe`，浏览器会自动打开大屏。
+3. 本机安装并使用过兼容的 Codex 桌面版后，大屏会读取当前用户的项目和聊天。
+
+无需安装 Python、Node.js 或 Git，无需管理员权限。没有 Codex 数据时会显示首次使用提示。
+请保留 `_internal` 文件夹，并从解压后的文件夹启动程序。
+关闭浏览器后后台服务仍会运行；双击 `停止 NeuroRing.cmd` 可退出。
+需要桌面入口时，双击 `创建桌面快捷方式.cmd`。
+
+当前为 `0.1.0-preview.1` 预览版。使用、兼容边界与构建方法见 [PORTABLE.md](PORTABLE.md)，
+独立 Windows 虚拟机验收记录见 [ISOLATED_VALIDATION.md](ISOLATED_VALIDATION.md)。
+
+### 从源码运行
 
 当前实现面向 **Windows + Python 3.11 或更新版本 + 本机 Codex 桌面版**。
 Python 需加入 PATH，能够运行 `python` 和 `pythonw`。无需第三方 Python 包或前端构建工具。
@@ -45,7 +59,7 @@ cd NeuroRing
 python launch.py
 ```
 
-也可以下载 ZIP，解压后双击 `启动大屏.cmd`。
+也可以下载仓库源码 ZIP，解压后双击 `启动大屏.cmd`；源码包需要上述 Python 环境。
 启动器会自动打开浏览器。优先使用 `8791` 端口；如果该端口被系统保留或被其他程序占用，
 会自动选择可用端口，不需要更改 Windows 设置。重复启动会复用已经启动的服务。
 双击 `停止大屏.cmd` 可停止服务；关闭浏览器不会停止后台服务。

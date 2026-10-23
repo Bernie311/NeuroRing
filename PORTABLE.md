@@ -1,6 +1,8 @@
 # NeuroRing Windows 免安装版
 
-本候选版基于公开仓库提交 `111a194`，新增自带运行环境、独立服务管理、桌面快捷方式与首次启动提示。原有视觉设计保留。
+`0.1.0-preview.1` 基于公开仓库提交 `111a194`，新增自带运行环境、独立服务管理、桌面快捷方式与首次启动提示。原有视觉设计保留。
+
+**[下载 Windows x64 免安装 ZIP](https://github.com/Bernie311/NeuroRing/releases/download/v0.1.0-preview.1/NeuroRing-Windows-x64.zip)** · [版本说明与校验文件](https://github.com/Bernie311/NeuroRing/releases/tag/v0.1.0-preview.1)
 
 ## 使用
 
@@ -30,7 +32,9 @@
 实时状态最多覆盖最近 8 条聊天，事件最多读取最近 120 条聊天。普通云端 ChatGPT 聊天未接入。
 内部数据格式随 Codex 版本变化；“程序可启动”和“兼容你的 Codex 版本”是两项不同的验证。
 
-目标：Windows 10/11 x64。维护者本机验证结果见随包 `验证说明.md`；全新电脑、Windows 10 和 ARM64 未验证。
+目标：Windows 10/11 x64。维护者本机验证快照见随包 `验证说明.md`（[在线版](https://github.com/Bernie311/NeuroRing/blob/main/PORTABLE_VALIDATION.md)），
+后续独立 Windows 虚拟机验收及准确的系统范围见 [隔离验收记录](https://github.com/Bernie311/NeuroRing/blob/main/ISOLATED_VALIDATION.md)。
+Windows 10、ARM64 和其他 Codex 版本仍未验证。
 此试用包未签署 Windows 代码签名；系统是否显示下载信誉提示，需要在实际下载环境验收。
 
 ## 维护者构建
@@ -49,7 +53,7 @@ node --test tests/task-band.test.cjs
 只使用明确列出的文件；不会把工作目录、个人配置或数据库收进发行包。
 源码与本机运行版分开维护。不要把 `catalog.json`、日志、数据库或测试用数据打包给别人。
 
-采用 PyInstaller 文件夹模式：https://pyinstaller.org/en/stable/operating-mode.html
-运行资源路径说明：https://pyinstaller.org/en/stable/runtime-information.html
+采用 [PyInstaller 文件夹模式](https://pyinstaller.org/en/stable/operating-mode.html)，
+参考 [运行资源路径说明](https://pyinstaller.org/en/stable/runtime-information.html)。
 
 原项目许可、商用授权与署名继续适用，详见 `LICENSE` 和 `NOTICE.md`。

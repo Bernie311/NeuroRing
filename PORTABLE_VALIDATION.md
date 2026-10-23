@@ -1,5 +1,7 @@
 # Windows 免安装候选版验证
 
+> 本文保留首轮本机验证快照。后续隔离验收与发布状态见 [隔离验收记录](https://github.com/Bernie311/NeuroRing/blob/main/ISOLATED_VALIDATION.md) 和 [GitHub Release](https://github.com/Bernie311/NeuroRing/releases/tag/v0.1.0-preview.1)。新的验收记录单独发布，以确保发布 ZIP 与隔离测试文件一致。
+
 日期：2026-10-23（Asia/Shanghai）。版本：0.1.0-preview.1。
 基于公开源码 `111a194f79402c81a935dc16b239b407794cf46b`，独立构建，未发布到 GitHub Release。
 
@@ -28,6 +30,6 @@
 - 全新 Windows 用户、Windows 10、ARM64、其他 Codex 版本未验证。
 - 目前依赖 Codex 内部数据库结构与实时协议，程序能够启动不等于兼容所有 Codex 版本。
 - Windows 下载信誉提示和代码签名的真实下载流程未验证；本包未作代码签名。
-- 本次未发布线上下载页或 GitHub Release，也未替换维护者现用的 E:\NeuroRing。
+- 本轮本机验证时尚未发布线上下载页或 GitHub Release，也未替换维护者现用版本。
 
 独立试用时请完整解压，并保留 `_internal` 文件夹。使用说明见 `使用说明.md`（源码中为 `PORTABLE.md`）。
