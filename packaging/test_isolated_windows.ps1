@@ -1,4 +1,4 @@
-﻿param([Parameter(Mandatory=$true)][string]$Archive,
+param([Parameter(Mandatory=$true)][string]$Archive,
       [Parameter(Mandatory=$true)][string]$ExpectedSha256)
 $ErrorActionPreference='Stop'
 $ProgressPreference='SilentlyContinue'
@@ -30,8 +30,14 @@ Add-LocalGroupMember -Group (Get-LocalGroup -SID 'S-1-5-32-545') -Member $user
 $sid=$user.SID.Value
 & icacls $root /grant ('*'+$sid+':(OI)(CI)M') /T /Q | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'Cannot prepare isolated user test directory' }
-& icacls $package /inheritance:r /grant:r '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-18:(OI)(CI)F' ('*'+$sid+':(OI)(CI)RX') /T /Q | Out-Null
+& icacls $package /inheritance:r /grant:r '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-18:(OI)(CI)F' ('*'+$sid+':(OI)(CI)RX') /Q | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'Cannot restrict package folder to read/execute' }
+# Apply inheritable rules to the directory, then let files inherit them.
+# Applying (OI)(CI) with /inheritance:r to every file can leave files with
+# no applicable allow ACE for the standard user.
+& icacls (Join-Path $package '*') /reset /T /Q | Out-Null
+if ($LASTEXITCODE -ne 0) { throw 'Cannot inherit package read/execute permissions' }
+[ordered]@{directory=(Get-Acl -LiteralPath $package).Sddl;executable=(Get-Acl -LiteralPath (Join-Path $package 'NeuroRing.exe')).Sddl} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $results 'package-acl.json') -Encoding UTF8
 $credential=[Management.Automation.PSCredential]::new(($env:COMPUTERNAME+'\'+$testName),$password)
 $shell=Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
 $arguments=@('-NoProfile','-ExecutionPolicy','Bypass','-File',('"'+$childScript+'"'),'-PackageDir',('"'+$package+'"'),'-FixtureDir',('"'+$fixture+'"'),'-ResultDir',('"'+$results+'"'))
@@ -53,3 +59,4 @@ if ($exit -ne 0) { throw ('Isolated account test failed with exit code '+$exit) 
 $report=Get-Content -LiteralPath (Join-Path $results 'report.json') -Raw | ConvertFrom-Json
 if (-not $report.passed) { throw 'Acceptance report did not pass' }
 Write-Output 'Isolated Windows VM acceptance passed.'
+
