@@ -1,4 +1,4 @@
-﻿param([Parameter(Mandatory=$true)][string]$PackageDir,
+param([Parameter(Mandatory=$true)][string]$PackageDir,
       [Parameter(Mandatory=$true)][string]$FixtureDir,
       [Parameter(Mandatory=$true)][string]$ResultDir)
 $ErrorActionPreference='Stop'
@@ -10,8 +10,17 @@ $script:runtimeFile=$null
 $blocker=$null
 function Passed([string]$name) { $report.checks+= $name; Write-Output ('PASS '+$name) }
 function Assert([bool]$condition,[string]$message) { if (-not $condition) { throw $message } }
+function Spawn-App([string[]]$Arguments=@('--no-browser')) {
+    $info=New-Object Diagnostics.ProcessStartInfo
+    $info.FileName=$exe
+    $info.Arguments=[string]::Join(' ',$Arguments)
+    $info.WorkingDirectory=$env:TEMP
+    $info.UseShellExecute=$false
+    $info.CreateNoWindow=$true
+    return [Diagnostics.Process]::Start($info)
+}
 function Launch([string[]]$Arguments=@('--no-browser')) {
-    $process=Start-Process -FilePath $exe -ArgumentList $Arguments -WindowStyle Hidden -PassThru
+    $process=Spawn-App -Arguments $Arguments
     Assert ($process.WaitForExit(30000)) 'Launcher timed out'
     Assert ($process.ExitCode -eq 0) ('Launcher failed: '+$process.ExitCode)
 }
@@ -55,6 +64,10 @@ try {
     $env:TMP=$env:TEMP
     New-Item -ItemType Directory -Path $env:TEMP -Force | Out-Null
     $report.environment=@{user=$env:USERNAME;isAdministrator=$false;os=(Get-CimInstance Win32_OperatingSystem).Caption;profile=$env:USERPROFILE;computer=$env:COMPUTERNAME}
+    $report.environment.packageAcl=(Get-Acl -LiteralPath $PackageDir).Sddl
+    $report.environment.exeAcl=(Get-Acl -LiteralPath $exe).Sddl
+    $report.environment.exeReadableBytes=[IO.File]::ReadAllBytes($exe).Length
+    $report.environment.workingDirectory=(Get-Location).Path
     $env:PATH=Join-Path $env:SystemRoot 'System32'
     Remove-Item Env:PYTHONHOME,Env:PYTHONPATH,Env:VIRTUAL_ENV,Env:NEURORING_DATA_DIR -ErrorAction SilentlyContinue
     $env:NEURORING_CODEX_HOME=Join-Path $env:LOCALAPPDATA 'NeuroRingAcceptance\codex'
@@ -70,8 +83,8 @@ try {
     $blocker.Start()
     $occupied=$blocker.LocalEndpoint.Port
     $launchArgs=@('--no-browser','--port',[string]$occupied)
-    $one=Start-Process -FilePath $exe -ArgumentList $launchArgs -WindowStyle Hidden -PassThru
-    $two=Start-Process -FilePath $exe -ArgumentList $launchArgs -WindowStyle Hidden -PassThru
+    $one=Spawn-App -Arguments $launchArgs
+    $two=Spawn-App -Arguments $launchArgs
     Assert ($one.WaitForExit(30000) -and $two.WaitForExit(30000)) 'Concurrent launch timed out'
     Assert ($one.ExitCode -eq 0 -and $two.ExitCode -eq 0) 'Concurrent launch failed'
     $saved=Read-Runtime
@@ -136,7 +149,7 @@ try {
     Passed 'Edge renders the packaged dashboard and synthetic task data in the isolated user session'
 
     # Exercise the ordinary entry point too; the server is already available.
-    $normal=Start-Process -FilePath $exe -WindowStyle Hidden -PassThru
+    $normal=Spawn-App -Arguments @()
     Assert ($normal.WaitForExit(30000) -and $normal.ExitCode -eq 0) 'Normal browser-opening launch failed'
     Assert ((Read-Runtime).pid -eq $saved.pid) 'Normal launch failed to reuse the service'
     Passed 'Ordinary EXE entry point requests browser opening and reuses the service'
