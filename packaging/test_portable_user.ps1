@@ -62,6 +62,7 @@ try {
     $env:APPDATA=Join-Path $env:USERPROFILE 'AppData\Roaming'
     $env:TEMP=Join-Path $env:LOCALAPPDATA 'Temp'
     $env:TMP=$env:TEMP
+    $env:PSModulePath=(Join-Path $env:USERPROFILE 'Documents\WindowsPowerShell\Modules')+';'+(Join-Path $env:ProgramFiles 'WindowsPowerShell\Modules')+';'+(Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\Modules')
     New-Item -ItemType Directory -Path $env:TEMP -Force | Out-Null
     $report.environment=@{user=$env:USERNAME;isAdministrator=$false;os=(Get-CimInstance Win32_OperatingSystem).Caption;profile=$env:USERPROFILE;computer=$env:COMPUTERNAME}
     $report.environment.packageAcl=(Get-Acl -LiteralPath $PackageDir).Sddl
